@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.0/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .navbar-custom {
+        background-color: #343a40; /* Dark gray */
+      }
+      .navbar-custom .navbar-brand,
+      .navbar-custom .navbar-nav .nav-link {
+        color: #ffffff; /* White */
+      }
+      .navbar-custom .navbar-toggler {
+        border-color: #ffffff; /* White */
+      }
+      .content {
+        background-color: #f8f9fa; /* Light gray */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        max-width: 800px;
+        margin: auto;
+      }
+      .form-control,
+      .form-select,
+      .btn {
+        margin-bottom: 10px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+      }
+      .table {
+        margin-top: 20px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      }
+      .footer {
+        background-color: #343a40;
+        color: white;
+        text-align: center;
+        padding: 10px 0;
+        margin-top: 20px;
+      }
+      .navbar-nav {
+        margin-left: auto;
+      }
+      .nav-item {
+        margin-left: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav
+      class="d-inline-flex navbar navbar-expand-lg navbar-dark navbar-custom"
+    >
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">My App</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto d-inline-flex">
+            <!-- Gunakan class ms-auto untuk membuat menu navbar berada di sebelah kanan -->
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="index.html"
+                >Home</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="category.html">Categories</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mt-4">
+      <div class="content">
+        <h2 class="mb-4 text-center">Add New Stuff</h2>
+        <div class="mb-3">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Name of stuff"
+            id="name"
+          />
+        </div>
+        <div class="mb-3">
+          <input
+            type="number"
+            class="form-control"
+            placeholder="Price of stuff"
+            id="price"
+          />
+        </div>
+        <div class="mb-3">
+          <select class="form-select" id="category">
+            <!-- Categories will be populated dynamically -->
+          </select>
+        </div>
+        <div class="text-center">
+          <button
+            type="button"
+            class="btn btn-primary"
+            onclick="SaveStuff()"
+            id="save"
+          >
+            Save
+          </button>
+        </div>
+
+        <h2 class="mt-5">Stuff List</h2>
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th scope="col">No.</th>
+              <th scope="col">Name</th>
+              <th scope="col">Category</th>
+              <th scope="col">Price</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody id="result">
+            <!-- Data will be dynamically inserted here -->
+          </tbody>
+        </table>
+        <div id="totalPrice" class="mt-3">Total Price: $0</div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="container">
+        <p>© 2024 My App. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+      const GetCategories = async () => {
+        try {
+          const response = await axios.get("http://localhost:3000/categories");
+          const categories = response.data;
+          let options = "";
+          categories.forEach((category) => {
+            options += `<option value="${category.id}">${category.name}</option>`;
+          });
+          document.getElementById("category").innerHTML = options;
+        } catch (error) {
+          console.error("Error fetching categories:", error);
+          alert(error.message);
+        }
+      };
+
+      const GetStuff = async () => {
+        try {
+          const response = await axios.get("http://localhost:3000/stuff");
+          const stuffs = response.data;
+          const categories = await axios.get(
+            "http://localhost:3000/categories"
+          );
+          const categoriesMap = new Map(
+            categories.data.map((cat) => [cat.id, cat.name])
+          );
+          let totalPrice = 0;
+          let bucket = "";
+          stuffs.forEach((stuff, index) => {
+            const categoryName =
+              categoriesMap.get(stuff.categoryId) || "Unknown";
+            totsl += stuff.pc; 
+            bucket += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${stuff.name}</td>
+                            <td>${categoryName}</td>
+                            <td>$${stuff.price}</td>
+                            <td>
+                                <button type="button" class="btn btn-warning btn-sm" onclick="EditStuff('${
+                                  stuff.id
+                                }')">Edit</button>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="DeleteStuff('${
+                                  stuff.id
+                                }')">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+          });
+          document.getElementById("result").innerHTML = bucket;
+          updateTotalPrice();
+        } catch (error) {
+          console.error(error);
+          alert(error.message);
+        }
+      };
+
+      const SaveStuff = async () => {
+        const name = document.getElementById("name").value;
+        const price = document.getElementById("price").value;
+        const categoryId = document.getElementById("category").value;
+        try {
+          await axios.post("http://localhost:3000/stuff", {
+            name: name,
+            price: price,
+            categoryId: categoryId,
+          });
+          GetStuff();
+        } catch (error) {
+          console.error("Error saving stuff:", error);
+          alert(error.message);
+        }
+      };
+
+      const DeleteStuff = async (id) => {
+        const confirmVal = confirm("Apakah data akan dihapus?");
+        if (confirmVal) {
+          try {
+            await axios.delete(`http://localhost:3000/stuff/${id}`);
+            GetStuff();
+          } catch (error) {
+            console.error("Error deleting stuff:", error);
+            alert(error.message);
+          }
+        }
+      };
+
+      const EditStuff = async (id) => {
+        try {
+          const response = await axios.get(`http://localhost:3000/stuff/${id}`);
+          const stuff = response.data;
+          document.getElementById("name").value = stuff.name;
+          document.getElementById("price").value = stuff.price;
+          document.getElementById("category").value = stuff.categoryId;
+          document.getElementById("save").innerText = "Update";
+          document
+            .getElementById("save")
+            .setAttribute("onclick", `UpdateStuff('${id}')`);
+        } catch (error) {
+          console.error("Error editing stuff:", error);
+          alert(error.message);
+        }
+      };
+
+      const UpdateStuff = async (id) => {
+        const name = document.getElementById("name").value;
+        const price = document.getElementById("price").value;
+        const categoryId = document.getElementById("category").value;
+        try {
+          await axios.patch(`http://localhost:3000/stuff/${id}`, {
+            name: name,
+            price: price,
+            categoryId: categoryId,
+          });
+          document.getElementById("name").value = "";
+          document.getElementById("price").value = "";
+          document.getElementById("category").value = "";
+          document.getElementById("save").innerText = "Save";
+          document
+            .getElementById("save")
+            .setAttribute("onclick", "SaveStuff()");
+          GetStuff();
+        } catch (error) {
+          console.error("Error updating stuff:", error);
+          alert(error.message);
+        }
+      };
+
+      const updateTotalPrice = async () => {
+        try {
+          const response = await axios.get("http://localhost:3000/stuff");
+          const stuffs = response.data;
+          const totalPrice = stuffs.reduce(
+            (total, stuff) => total + parseFloat(stuff.price),
+            0
+          );
+          document.getElementById(
+            "totalPrice"
+          ).innerText = `Total Price: $${totalPrice}`;
+        } catch (error) {
+          console.error("Error calculating total price:", error);
+          alert(error.message);
+        }
+      };
+
+      // Initialize categories and stuff on page load
+      GetCategories();
+      GetStuff();
+    </script>
+  </body>
+</html>
